@@ -57,7 +57,7 @@ class Blocks extends React.Component {
       ...filter
     };
     const query = qs.stringify({ format: "csv", ...params });
-    getCsvUrl(`${API_URL}/api/block?${query}`);
+    getCsvUrl(`${API_URL}/block?${query}`);
 
     let { blocks, total } = await Client.getBlocks(params);
 

@@ -66,6 +66,7 @@ export default class NodeMap extends Component {
 
       let overlay = new L.echartsLayer(map, echarts);
       let chartsContainer = overlay.getEchartsContainer();
+      console.log(chartsContainer);
       let myChart = overlay.initECharts(chartsContainer);
       window.onresize = myChart.onresize;
 

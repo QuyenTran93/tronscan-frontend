@@ -111,7 +111,7 @@ class NewTransactions extends React.Component {
                     rangeTotal = data.rangeTotal;
 
                 }else{
-                    getCsvUrl(`${API_URL}/api/transaction?${query}`);
+                    getCsvUrl(`${API_URL}/transaction?${query}`);
 
                     allData = await Promise.all([
                         Client.getTransactions({

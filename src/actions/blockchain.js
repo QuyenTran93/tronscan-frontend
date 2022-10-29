@@ -32,7 +32,6 @@ export const setBlocks = (blocks = []) => ({
 
 export const loadBlocks = () => async (dispatch) => {
     let {blocks} = await Client.getBlocks({
-        order: '-timestamp',
         limit: 15,
     });
     dispatch(setBlocks(blocks));
@@ -43,7 +42,6 @@ export const loadBlocks = () => async (dispatch) => {
 
 export const loadTransactions = () => async (dispatch) => {
   let {transfers: list} = await Client.getTransfers({
-    order: '-timestamp',
     limit: 15,
   });
   

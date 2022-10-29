@@ -24,7 +24,7 @@ export const BlockChainRoutes = [
         path: "/blockchain",
         label: "blockchain",
         icon: "fa fa-link",
-        component: () => < Redirect to = "/blockchain/blocks" / > ,
+        component: () => < Redirect to = "/blockchain/blocks" /> ,
         routes: [{
                 label: "nodes",
                 icon: "fa fa-server",

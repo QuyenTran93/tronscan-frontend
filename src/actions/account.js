@@ -2,6 +2,7 @@ import { Client } from "../services/api";
 import Lockr from "lockr";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { IS_MAINNET, TORNSOCKET } from "../constants";
+import io from "socket.io-client";
 
 export const SET_TOKEN_BALANCES = "SET_TOKEN_BALANCES";
 export const SET_RECENT_TRANSACTIONS = "SET_RECENT_TRANSACTIONS";
@@ -18,7 +19,7 @@ export const setTokenBalances = (
   trc20token = [],
   frozen = {},
   accountResource = {},
-  delegated = {},
+  delegated = {}
 ) => ({
   type: SET_TOKEN_BALANCES,
   tokens,
@@ -30,44 +31,44 @@ export const setTokenBalances = (
 
 export const setRecentTransactions = (transactions = []) => ({
   type: SET_RECENT_TRANSACTIONS,
-  transactions
+  transactions,
 });
 
 export const setTotalTransactions = (totalTransactions = 0) => ({
   type: SET_TOTAL_TRANSACTIONS,
-  totalTransactions
+  totalTransactions,
 });
 
-export const setWebsocketFn = socketData => ({
+export const setWebsocketFn = (socketData) => ({
   type: SET_WEBSOCKET,
-  socketData
+  socketData,
 });
 
-export const setWsData = wsdata => ({
+export const setWsData = (wsdata) => ({
   type: SET_WS_DATA,
-  wsdata
+  wsdata,
 });
-export const setWebsocketSunFn = socketDataSun => ({
+export const setWebsocketSunFn = (socketDataSun) => ({
   type: SET_WEBSOCKET_SUN,
-  socketDataSun
+  socketDataSun,
 });
 
-export const setWsDataSun = wsdataSun => ({
+export const setWsDataSun = (wsdataSun) => ({
   type: SET_WS_DATA_SUN,
-  wsdataSun
+  wsdataSun,
 });
 
-export const loadRecentTransactions = address => async dispatch => {
+export const loadRecentTransactions = (address) => async (dispatch) => {
   let { transfers, total } = await Client.getTransactions({
     limit: 10,
     address,
-    sort: "-timestamp"
+    sort: "-timestamp",
   });
   dispatch(setRecentTransactions(transfers));
   dispatch(setTotalTransactions(total));
 };
 
-export const setWebsocket = () => async dispatch => {
+export const setWebsocket = () => async (dispatch) => {
   // if(Lockr.get("websocket") === 'open'){
   //   return;
   // }
@@ -80,20 +81,26 @@ export const setWebsocket = () => async dispatch => {
     wsUrl = TORNSOCKET.WSSURLSUN;
   }
 
-  let websocket = new ReconnectingWebSocket(wsUrl, [], {
-    minReconnectionDelay: 500
+  // let websocket = new ReconnectingWebSocket(wsUrl, [], {
+  //   minReconnectionDelay: 500
+  // });
+  let websocket = io.connect(wsUrl, {
+    transports: ["websocket"],
+    upgrade: false,
   });
-  websocket.onopen = res => {};
+  websocket.on("open", (res) => {});
 
-  websocket.onmessage = res => {
+  websocket.on("message", (res) => {
     dispatch(setWsData(JSON.parse(res.data)));
-  };
+  });
 
-  websocket.onerror = error => {
+  websocket.on("error", (error) => {
     console.log(error);
-  };
+  });
 
-  window.onbeforeunload = function() {
+  websocket.on('')
+
+  window.onbeforeunload = function () {
     Lockr.set("websocket", "close");
     websocket.close();
   };
@@ -101,23 +108,23 @@ export const setWebsocket = () => async dispatch => {
   Lockr.set("websocket", "open");
 };
 
-export const setWebsocketSun = () => async dispatch => {
+export const setWebsocketSun = () => async (dispatch) => {
   let wsUrl = TORNSOCKET.WSSURLSUN;
 
   let websocket = new ReconnectingWebSocket(wsUrl, [], {
-    minReconnectionDelay: 500
+    minReconnectionDelay: 500,
   });
-  websocket.onopen = res => {};
+  websocket.onopen = (res) => {};
 
-  websocket.onmessage = res => {
+  websocket.onmessage = (res) => {
     dispatch(setWsDataSun(JSON.parse(res.data)));
   };
 
-  websocket.onerror = error => {
+  websocket.onerror = (error) => {
     console.log(error);
   };
 
-  window.onbeforeunload = function() {
+  window.onbeforeunload = function () {
     Lockr.set("websocketsun", "close");
     websocket.close();
   };
@@ -128,17 +135,17 @@ export const setWebsocketSun = () => async dispatch => {
 // token20Map
 export const setToken20Map = (token20Map = {}) => ({
   type: SET_TOKEN20_MAP,
-  token20Map
+  token20Map,
 });
 
 // tokenMap
 export const setTokenMap = (tokenMap = {}) => ({
   type: SET_TOKEN_MAP,
-  tokenMap
+  tokenMap,
 });
 
 //mutiSign permission
 export const setPermissions = (permission = {}) => ({
   type: SET_PERMISSIONS,
-  permission
+  permission,
 });

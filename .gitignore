@@ -28,3 +28,6 @@ update-to-*
 /web.tar*
 
 .history
+
+build/
+nohup.out

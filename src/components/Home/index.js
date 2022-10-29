@@ -20,31 +20,32 @@ import {
   LineReactHighChartAdd,
   LineReactHighChartTx,
   LineReactHighChartHomeAddress,
-  LineReactHighChartHomeTx
+  LineReactHighChartHomeTx,
 } from "../common/LineCharts";
-import { API_URL, IS_MAINNET ,uuidv4} from "../../constants";
+import { API_URL, IS_MAINNET, uuidv4 } from "../../constants";
 import { setWebsocket } from "../../actions/account";
 import Lockr from "lockr";
 import PaneGroup from "./PaneGroup";
 import {
   getPerformanceTiming,
-  getPerformanceTimingEntry
+  getPerformanceTimingEntry,
 } from "../../utils/DateTime";
-import ApiClientMonitor from '../../services/monitor'
+import ApiClientMonitor from "../../services/monitor";
+import moment from "moment";
 
 @connect(
-  state => {
+  (state) => {
     return {
       blocks: state.blockchain.blocks,
       account: state.app.account,
       theme: state.app.theme,
       activeLanguage: state.app.activeLanguage,
       wsdata: state.account.wsdata,
-      websocket: state.account.websocket
+      websocket: state.account.websocket,
     };
   },
   {
-    setWebsocket
+    setWebsocket,
   }
 )
 @withTimers
@@ -73,42 +74,35 @@ export default class Home extends Component {
         id: 1,
         html_url: "https://poloniex.org/zh/launchBase?utm_source=TS1",
         name: "Poloni DEX LaunchBase 瞩目呈现 ACE重磅登陆",
-        created_at: "2019-04-09T12:00:00Z"
+        created_at: "2019-04-09T12:00:00Z",
       },
       noticeenIEO: {
         id: 1,
         html_url: "https://poloniex.org/launchBase?utm_source=TS1",
         name: "Poloni DEX LaunchBase grand open ACE is waiting for you",
-        created_at: "2019-04-09T12:00:00Z"
+        created_at: "2019-04-09T12:00:00Z",
       },
-      newNotice: [" ", " ", " "]
+      newNotice: [" ", " ", " "],
     };
   }
   async componentWillMount() {
     window.performance.mark("start2");
 
-    var measure5  =-1;
+    var measure5 = -1;
     if (performance.navigation.type == 1) {
-      performance.measure(
-        "mySetTimeout5",
-        "start",
-        "start2"
-      )
+      performance.measure("mySetTimeout5", "start", "start2");
       var measures5 = window.performance.getEntriesByName("mySetTimeout5");
       measure5 = measures5[0].duration;
-      this.MonitoringParameters3(measure5);
+      // this.MonitoringParameters3(measure5);
       //window.performance.getEntries();
-    
-
-      
-    } 
+    }
   }
 
   async loadNodes() {
     // let {total} = await Client.getNodeLocations();
     let { data } = await xhr.get(`${API_URL}/api/node`);
     this.setState({
-      onlineNodes: data.total
+      onlineNodes: data.total,
     });
   }
 
@@ -116,21 +110,27 @@ export default class Home extends Component {
     let { data } = await xhr.get(`${API_URL}/api/system/homepage-bundle`);
     Lockr.set("dataEth", data.priceETH);
     Lockr.set("dataEur", data.priceEUR);
+
+    const lastDayStr = moment().utc().add(-1, "days").format("Y-M-D");
+
+    const lastDayOverview = data.statsOverview.data.find(
+      (item) => item.dateDatStr === lastDayStr
+    );
     this.setState({
       onlineNodes: data.node.total,
       maxTps: data.tps.data.maxTps ? data.tps.data.maxTps : 0,
       tps: data.tps.data.currentTps ? data.tps.data.currentTps : 0,
       blockHeight: data.tps.data.blockHeight ? data.tps.data.blockHeight : 0,
-      transactionPerDay: data.yesterdayStat.data[0].newTransactionSeen
+      transactionPerDay: lastDayOverview ? lastDayOverview.totalTransaction : 0,
     });
   }
 
   async loadAccounts() {
     let { rangeTotal } = await Client.getAccounts({
-      limit: 1
+      limit: 1,
     });
     this.setState({
-      totalAccounts: rangeTotal
+      totalAccounts: rangeTotal,
     });
   }
 
@@ -153,7 +153,7 @@ export default class Home extends Component {
         addressesTemp.push({
           date: txOverviewStats[tx].date,
           total: txOverviewStats[tx].totalAddress,
-          increment: txOverviewStats[tx].newAddressSeen
+          increment: txOverviewStats[tx].newAddressSeen,
         });
         temp.push({
           date: txOverviewStats[tx].date,
@@ -162,7 +162,7 @@ export default class Home extends Component {
           avgBlockTime: txOverviewStats[tx].avgBlockTime,
           avgBlockSize: txOverviewStats[tx].avgBlockSize,
           totalBlockCount: txOverviewStats[tx].totalBlockCount,
-          newAddressSeen: txOverviewStats[tx].newAddressSeen
+          newAddressSeen: txOverviewStats[tx].newAddressSeen,
         });
       } else {
         temp.push({
@@ -174,18 +174,18 @@ export default class Home extends Component {
           totalBlockCount:
             txOverviewStats[tx].totalBlockCount -
             txOverviewStats[tx - 1].totalBlockCount,
-          newAddressSeen: txOverviewStats[tx].newAddressSeen
+          newAddressSeen: txOverviewStats[tx].newAddressSeen,
         });
         addressesTemp.push({
           date: txOverviewStats[tx].date,
           total: txOverviewStats[tx].totalAddress,
-          increment: txOverviewStats[tx].newAddressSeen
+          increment: txOverviewStats[tx].newAddressSeen,
         });
       }
     }
     this.setState({
       txOverviewStats: temp.slice(0, 14),
-      addressesStats: addressesTemp.slice(0, 14)
+      addressesStats: addressesTemp.slice(0, 14),
       //transactionPerDay: temp[temp.length - 2].totalTransaction,
       // blockHeight: blocks[0] ? blocks[0].number : 0,
       // totalAccounts: txOverviewStats[txOverviewStats.length-1].totalAddress,
@@ -194,63 +194,63 @@ export default class Home extends Component {
   async loadAllData() {
     const allData = await Promise.all([
       Client.getTxOverviewStats(),
-      xhr.get(`https://dappchainapi.tronscan.org/api/stats/overview`)
-    ]).catch(e => {
+      // xhr.get(`https://dappchainapi.tronscan.org/api/stats/overview`)
+    ]).catch((e) => {
       console.log("error:" + e);
     });
     const [
       { txOverviewStats },
-      {
-        data: { data }
-      }
+      // {
+      //   data: { data }
+      // }
     ] = allData;
-    let SunTxOverviewStats = data;
+    // let SunTxOverviewStats = data;
 
     /*
      *  SUN-Network
      */
     let SunTemp = [];
     let SunAddressesTemp = [];
-    for (let suntxs in SunTxOverviewStats) {
-      let suntx = parseInt(suntxs);
-      if (suntx === 0) {
-        SunAddressesTemp.push({
-          date: SunTxOverviewStats[suntx].date,
-          total: SunTxOverviewStats[suntx].totalAddress,
-          increment: SunTxOverviewStats[suntx].newAddressSeen,
-          name: "sun_network"
-        });
-        SunTemp.push({
-          date: SunTxOverviewStats[suntx].date,
-          // totalTransaction: (txOverviewStats[tx].totalTransaction - txOverviewStats[tx - 1].totalTransaction),
-          totalTransaction: SunTxOverviewStats[suntx].newTransactionSeen,
-          avgBlockTime: SunTxOverviewStats[suntx].avgBlockTime,
-          avgBlockSize: SunTxOverviewStats[suntx].avgBlockSize,
-          totalBlockCount: SunTxOverviewStats[suntx].totalBlockCount,
-          newAddressSeen: SunTxOverviewStats[suntx].newAddressSeen,
-          name: "sun_network"
-        });
-      } else {
-        SunTemp.push({
-          date: SunTxOverviewStats[suntx].date,
-          // totalTransaction: (txOverviewStats[tx].totalTransaction - txOverviewStats[tx - 1].totalTransaction),
-          totalTransaction: SunTxOverviewStats[suntx].newTransactionSeen,
-          avgBlockTime: SunTxOverviewStats[suntx].avgBlockTime,
-          avgBlockSize: SunTxOverviewStats[suntx].avgBlockSize,
-          totalBlockCount:
-            SunTxOverviewStats[suntx].totalBlockCount -
-            SunTxOverviewStats[suntx - 1].totalBlockCount,
-          newAddressSeen: SunTxOverviewStats[suntx].newAddressSeen,
-          name: "sun_network"
-        });
-        SunAddressesTemp.push({
-          date: SunTxOverviewStats[suntx].date,
-          total: SunTxOverviewStats[suntx].totalAddress,
-          increment: SunTxOverviewStats[suntx].newAddressSeen,
-          name: "sun_network"
-        });
-      }
-    }
+    // for (let suntxs in SunTxOverviewStats) {
+    //   let suntx = parseInt(suntxs);
+    //   if (suntx === 0) {
+    //     SunAddressesTemp.push({
+    //       date: SunTxOverviewStats[suntx].date,
+    //       total: SunTxOverviewStats[suntx].totalAddress,
+    //       increment: SunTxOverviewStats[suntx].newAddressSeen,
+    //       name: "sun_network"
+    //     });
+    //     SunTemp.push({
+    //       date: SunTxOverviewStats[suntx].date,
+    //       // totalTransaction: (txOverviewStats[tx].totalTransaction - txOverviewStats[tx - 1].totalTransaction),
+    //       totalTransaction: SunTxOverviewStats[suntx].newTransactionSeen,
+    //       avgBlockTime: SunTxOverviewStats[suntx].avgBlockTime,
+    //       avgBlockSize: SunTxOverviewStats[suntx].avgBlockSize,
+    //       totalBlockCount: SunTxOverviewStats[suntx].totalBlockCount,
+    //       newAddressSeen: SunTxOverviewStats[suntx].newAddressSeen,
+    //       name: "sun_network"
+    //     });
+    //   } else {
+    //     SunTemp.push({
+    //       date: SunTxOverviewStats[suntx].date,
+    //       // totalTransaction: (txOverviewStats[tx].totalTransaction - txOverviewStats[tx - 1].totalTransaction),
+    //       totalTransaction: SunTxOverviewStats[suntx].newTransactionSeen,
+    //       avgBlockTime: SunTxOverviewStats[suntx].avgBlockTime,
+    //       avgBlockSize: SunTxOverviewStats[suntx].avgBlockSize,
+    //       totalBlockCount:
+    //         SunTxOverviewStats[suntx].totalBlockCount -
+    //         SunTxOverviewStats[suntx - 1].totalBlockCount,
+    //       newAddressSeen: SunTxOverviewStats[suntx].newAddressSeen,
+    //       name: "sun_network"
+    //     });
+    //     SunAddressesTemp.push({
+    //       date: SunTxOverviewStats[suntx].date,
+    //       total: SunTxOverviewStats[suntx].totalAddress,
+    //       increment: SunTxOverviewStats[suntx].newAddressSeen,
+    //       name: "sun_network"
+    //     });
+    //   }
+    // }
 
     /*
      *  Main-Network
@@ -265,7 +265,7 @@ export default class Home extends Component {
           date: txOverviewStats[tx].date,
           total: txOverviewStats[tx].totalAddress,
           increment: txOverviewStats[tx].newAddressSeen,
-          name: "main_chain"
+          name: "main_chain",
         });
         temp.push({
           date: txOverviewStats[tx].date,
@@ -275,7 +275,7 @@ export default class Home extends Component {
           avgBlockSize: txOverviewStats[tx].avgBlockSize,
           totalBlockCount: txOverviewStats[tx].totalBlockCount,
           newAddressSeen: txOverviewStats[tx].newAddressSeen,
-          name: "main_chain"
+          name: "main_chain",
         });
       } else {
         temp.push({
@@ -288,50 +288,54 @@ export default class Home extends Component {
             txOverviewStats[tx].totalBlockCount -
             txOverviewStats[tx - 1].totalBlockCount,
           newAddressSeen: txOverviewStats[tx].newAddressSeen,
-          name: "main_chain"
+          name: "main_chain",
         });
         addressesTemp.push({
           date: txOverviewStats[tx].date,
           total: txOverviewStats[tx].totalAddress,
           increment: txOverviewStats[tx].newAddressSeen,
-          name: "main_chain"
+          name: "main_chain",
         });
       }
     }
 
     let TotalAddressesTemp = [];
     let TotalTemp = [];
-    for (let i = 0; i < SunAddressesTemp.length; i++) {
-      for (let j = 0; j < addressesTemp.length; j++) {
-        if (i == j) {
-          TotalAddressesTemp.push({
-            date: addressesTemp[j]["date"],
-            total: addressesTemp[j]["total"] + SunAddressesTemp[i]["total"],
-            increment:
-              addressesTemp[j]["increment"] + SunAddressesTemp[i]["increment"],
-            name: "TRON"
-          });
-        }
-      }
+    // for (let i = 0; i < SunAddressesTemp.length; i++) {
+    for (let j = 0; j < addressesTemp.length; j++) {
+      // if (i == j) {
+      TotalAddressesTemp.push({
+        date: addressesTemp[j]["date"],
+        // total: addressesTemp[j]["total"] + SunAddressesTemp[i]["total"],
+        // increment:
+        //   addressesTemp[j]["increment"] + SunAddressesTemp[i]["increment"],
+        // name: "TRON"
+        total: addressesTemp[j]["total"],
+        increment: addressesTemp[j]["increment"],
+        name: "TRON",
+      });
+      // }
+      // }
     }
-    for (let i = 0; i < SunTemp.length; i++) {
-      for (let j = 0; j < temp.length; j++) {
-        TotalTemp.push({
-          date: temp[j]["date"],
-          totalTransaction:
-            temp[j]["totalTransaction"] + SunTemp[i]["totalTransaction"],
-          name: "TRON"
-        });
-      }
+    // for (let i = 0; i < SunTemp.length; i++) {
+    for (let j = 0; j < temp.length; j++) {
+      TotalTemp.push({
+        date: temp[j]["date"],
+        // totalTransaction:
+        //   temp[j]["totalTransaction"] + SunTemp[i]["totalTransaction"],
+        totalTransaction: temp[j]["totalTransaction"],
+        name: "TRON",
+      });
     }
+    // }
 
     this.setState({
       txOverviewStats: temp.slice(0, 14),
       addressesStats: addressesTemp.slice(0, 14),
-      SunTxOverviewStats: SunTemp.slice(0, 14),
-      SunAddressesStats: SunAddressesTemp.slice(0, 14),
+      // SunTxOverviewStats: SunTemp.slice(0, 14),
+      // SunAddressesStats: SunAddressesTemp.slice(0, 14),
       TotalAddressesStats: TotalAddressesTemp.slice(0, 14),
-      TotalTxOverviewStats: TotalTemp.slice(0, 14)
+      TotalTxOverviewStats: TotalTemp.slice(0, 14),
     });
   }
 
@@ -343,7 +347,7 @@ export default class Home extends Component {
     let result = await doSearch(search, type);
     if (result !== null) {
       this.setState({
-        hasFound: true
+        hasFound: true,
       });
       setTimeout(() => {
         window.location.hash = result;
@@ -351,12 +355,12 @@ export default class Home extends Component {
     } else {
       this.setState({
         search: "",
-        isShaking: true
+        isShaking: true,
       });
 
       setTimeout(() => {
         this.setState({
-          isShaking: false
+          isShaking: false,
         });
       }, 1000);
 
@@ -367,7 +371,7 @@ export default class Home extends Component {
     }
   };
 
-  onSearchKeyDown = ev => {
+  onSearchKeyDown = (ev) => {
     if (ev.keyCode === KEY_ENTER) {
       this.doSearch();
     }
@@ -385,8 +389,7 @@ export default class Home extends Component {
     // intl.locale == "zh"? data.articles.unshift(noticezhIEO):data.articles.unshift(noticeenIEO);
     this.setState({ notice: data.articles });
 
-    this.MonitoringParameters();
-
+    // this.MonitoringParameters();
   }
 
   async componentDidUpdate(prevProps) {
@@ -409,7 +412,7 @@ export default class Home extends Component {
       this.setState({
         maxTps: info.data.maxTps ? info.data.maxTps : 0,
         tps: info.data.currentTps ? info.data.currentTps : 0,
-        blockHeight: info.data.blockHeight ? info.data.blockHeight : 0
+        blockHeight: info.data.blockHeight ? info.data.blockHeight : 0,
       });
     }
   }
@@ -434,7 +437,7 @@ export default class Home extends Component {
         tps: info.currentTps ? info.currentTps : 0,
         blockHeight: info.blockHeight ? info.blockHeight : 0,
         startblockHeight: blockHeight,
-        startTps: tps
+        startTps: tps,
       });
     }
   }
@@ -468,14 +471,20 @@ export default class Home extends Component {
       SunAddressesStats,
       TotalAddressesStats,
       maxTps,
-      tps
+      tps,
     } = this.state;
 
     return (
       <main className="home pb-0">
         {/* <i className="main-icon-left"></i>
           <i className="main-icon-right"></i> */}
-        <div className={isMobile ? "container-fluid position-relative d-flex pt-1 pt-md-4 mx-auto flex-column" : "container-fluid position-relative d-flex  mx-auto flex-column"}>
+        <div
+          className={
+            isMobile
+              ? "container-fluid position-relative d-flex pt-1 pt-md-4 mx-auto flex-column"
+              : "container-fluid position-relative d-flex  mx-auto flex-column"
+          }
+        >
           {/*<div ref={(el) => this.$ref = el} style={{*/}
           {/*zIndex: 0,*/}
           {/*left: 0,*/}
@@ -676,7 +685,7 @@ export default class Home extends Component {
             {/* )} */}
           </div>
         </div>
-        <div className={isMobile? "pb-3 pb-md-5":"transferBlockSec"}>
+        <div className={isMobile ? "pb-3 pb-md-5" : "transferBlockSec"}>
           <div className="container">
             {isMobile ? (
               <div className="row mt-0 mt-md-4 mb-3">
@@ -866,7 +875,13 @@ export default class Home extends Component {
               </div>
             )}
 
-            <div className={isMobile?"row mt-0 mt-md-4 indxe-page-bottom-sec":"row indxe-page-bottom-sec-pc"}>
+            <div
+              className={
+                isMobile
+                  ? "row mt-0 mt-md-4 indxe-page-bottom-sec"
+                  : "row indxe-page-bottom-sec-pc"
+              }
+            >
               <div className="col-md-6 mt-0 mb-3 mt-md-0 text-center">
                 <RecentBlocks />
               </div>
@@ -879,154 +894,149 @@ export default class Home extends Component {
       </main>
     );
   }
-  MonitoringParameters(){
-      let _this = this;
-      if (window.performance || window.webkitPerformance) {
-          var perf = window.performance || window.webkitPerformance;
-          var timing = perf.timing;
-          var navi = perf.navigation;
+  // MonitoringParameters(){
+  //     let _this = this;
+  //     if (window.performance || window.webkitPerformance) {
+  //         var perf = window.performance || window.webkitPerformance;
+  //         var timing = perf.timing;
+  //         var navi = perf.navigation;
 
-          window.performance.mark("mySetTimeout-end2");
+  //         window.performance.mark("mySetTimeout-end2");
 
-          performance.measure(
-            "mySetTimeout",
-            "start2",
-            "mySetTimeout-end2"
-          );
+  //         performance.measure(
+  //           "mySetTimeout",
+  //           "start2",
+  //           "mySetTimeout-end2"
+  //         );
 
-          var measure5  =-1;
-          if (performance.navigation.type == 1) {
-            performance.measure(
-              "mySetTimeout5",
-              "start",
-              "start2"
-            );
-            var measures5 = window.performance.getEntriesByName("mySetTimeout5");
-            measure5 = measures5[0].duration;
-          }
- 
+  //         var measure5  =-1;
+  //         if (performance.navigation.type == 1) {
+  //           performance.measure(
+  //             "mySetTimeout5",
+  //             "start",
+  //             "start2"
+  //           );
+  //           var measures5 = window.performance.getEntriesByName("mySetTimeout5");
+  //           measure5 = measures5[0].duration;
+  //         }
 
-          var measures = window.performance.getEntriesByName("mySetTimeout");
-          var measure = measures[0];
+  //         var measures = window.performance.getEntriesByName("mySetTimeout");
+  //         var measure = measures[0];
 
+  //         var timer = setInterval(function() {
+  //             if (0 !== timing.loadEventEnd) {
+  //                 timing = perf.timing;
+  //                 let {loadPage,domReady,redirect,lookupDomain,ttfb,request,loadEvent,unloadEvent,connect} = getPerformanceTiming()
+  //                 clearInterval(timer);
+  //                 var time = performance.timing;
+  //                 if (measure5 == -1) {
+  //                   measure5 = domReady;
+  //                 }
+  //                 var data = {
+  //                     url: window.location.href,
+  //                     timezone: new Date().getTimezoneOffset()/60,
+  //                     browser:window.navigator.userAgent,
+  //                     pageLoadTime:loadPage,
+  //                     contentLoadTime:request,
+  //                     dnsSearchTime:lookupDomain,
+  //                     domAnalyzeTime:domReady,
+  //                     ttfbReadTime:ttfb,
+  //                     tcpBuildTime:connect,
+  //                     redirectTime:redirect,
+  //                     onloadCallbackTime:loadEvent,
+  //                     uninstallPageTime: unloadEvent,
+  //                     isMobile:isMobile && isMobile[0],
+  //                     navigationtype:performance.navigation.type,
+  //                     measure:parseInt(measure.duration),
+  //                     dompreload: time.responseEnd - time.navigationStart,
+  //                     domloadend:time.domComplete - time.domLoading,
+  //                     domative:time.domInteractive - time.domLoading,
+  //                     shelllod:time.domContentLoadedEventEnd - time.domContentLoadedEventStart,
+  //                     measure5:parseInt(measure5),
+  //                     blankTime:time.domLoading - time.fetchStart,
+  //                     v:'v4',
+  //                     entryList:getPerformanceTimingEntry(),
+  //                     udid:uuidv4
 
+  //                 };
+  //               window.performance.clearMarks();
+  //               window.performance.clearMeasures();
 
-          var timer = setInterval(function() {
-              if (0 !== timing.loadEventEnd) {
-                  timing = perf.timing;
-                  let {loadPage,domReady,redirect,lookupDomain,ttfb,request,loadEvent,unloadEvent,connect} = getPerformanceTiming()
-                  clearInterval(timer);
-                  var time = performance.timing;
-                  if (measure5 == -1) {
-                    measure5 = domReady;
-                  }
-                  var data = {
-                      url: window.location.href,
-                      timezone: new Date().getTimezoneOffset()/60,
-                      browser:window.navigator.userAgent,
-                      pageLoadTime:loadPage,
-                      contentLoadTime:request,
-                      dnsSearchTime:lookupDomain,
-                      domAnalyzeTime:domReady,
-                      ttfbReadTime:ttfb,
-                      tcpBuildTime:connect,
-                      redirectTime:redirect,
-                      onloadCallbackTime:loadEvent,
-                      uninstallPageTime: unloadEvent,
-                      isMobile:isMobile && isMobile[0],
-                      navigationtype:performance.navigation.type,
-                      measure:parseInt(measure.duration),
-                      dompreload: time.responseEnd - time.navigationStart,
-                      domloadend:time.domComplete - time.domLoading,
-                      domative:time.domInteractive - time.domLoading,
-                      shelllod:time.domContentLoadedEventEnd - time.domContentLoadedEventStart,
-                      measure5:parseInt(measure5),
-                      blankTime:time.domLoading - time.fetchStart,
-                      v:'v4',
-                      entryList:getPerformanceTimingEntry(),
-                      udid:uuidv4
+  //               ApiClientMonitor.setMonitor(data)
+  //                 return data;
+  //               }
+  //             })
+  //           }
+  //     }
 
-                  };
-                window.performance.clearMarks();
-                window.performance.clearMeasures();
+  //     MonitoringParameters3(measure5){
+  //       let _this = this;
+  //         if (window.performance || window.webkitPerformance) {
+  //             var perf = window.performance || window.webkitPerformance;
+  //             var timing = perf.timing;
+  //             var navi = perf.navigation;
 
-               
-                ApiClientMonitor.setMonitor(data)
-                  return data;
-                }
-              })
-            }         
-      }
+  //             window.performance.mark("mySetTimeout-end2");
 
-      MonitoringParameters3(measure5){
-        let _this = this;
-          if (window.performance || window.webkitPerformance) {
-              var perf = window.performance || window.webkitPerformance;
-              var timing = perf.timing;
-              var navi = perf.navigation;
-    
-              window.performance.mark("mySetTimeout-end2");
-    
-              performance.measure(
-                "mySetTimeout",
-                "start2",
-                "mySetTimeout-end2"
-              ); 
-  
-              var measures = window.performance.getEntriesByName("mySetTimeout");
-              var measure = measures[0];
+  //             performance.measure(
+  //               "mySetTimeout",
+  //               "start2",
+  //               "mySetTimeout-end2"
+  //             );
 
-              var timer = setInterval(function() {
-                   {
-                      timing = perf.timing;
-                      let {loadPage,domReady,redirect,lookupDomain,ttfb,request,loadEvent,unloadEvent,connect} = getPerformanceTiming()
-                      clearInterval(timer);
-                      var time = performance.timing;
-                      var data = {
-                          url: window.location.href,
-                          timezone: new Date().getTimezoneOffset()/60,
-                          browser:window.navigator.userAgent,
-                          pageLoadTime:loadPage,
-                          contentLoadTime:request,
-                          dnsSearchTime:lookupDomain,
-                          domAnalyzeTime:domReady,
-                          ttfbReadTime:ttfb,
-                          tcpBuildTime:connect,
-                          redirectTime:redirect,
-                          onloadCallbackTime:loadEvent,
-                          uninstallPageTime: unloadEvent,
-                          isMobile:isMobile && isMobile[0],
-                          navigationtype:performance.navigation.type,
-                          measure:parseInt(measure.duration),
-                          dompreload: time.responseEnd - time.navigationStart,
-                          domloadend:time.domComplete - time.domLoading,
-                          domative:time.domInteractive - time.domLoading,
-                          shelllod:time.domContentLoadedEventEnd - time.domContentLoadedEventStart,
-                          measure5:parseInt(measure5),
-                          blankTime:time.domLoading - time.fetchStart,
-                          v:'v3',
+  //             var measures = window.performance.getEntriesByName("mySetTimeout");
+  //             var measure = measures[0];
 
-                      };
-    
-                    // window.performance.clearMarks();
-                    // window.performance.clearMeasures();
-                    ApiClientMonitor.setMonitor(data)
-                      return data;
-                    }
-                  })
-                }         
-          }      
-          
- }
+  //             var timer = setInterval(function() {
+  //                  {
+  //                     timing = perf.timing;
+  //                     let {loadPage,domReady,redirect,lookupDomain,ttfb,request,loadEvent,unloadEvent,connect} = getPerformanceTiming()
+  //                     clearInterval(timer);
+  //                     var time = performance.timing;
+  //                     var data = {
+  //                         url: window.location.href,
+  //                         timezone: new Date().getTimezoneOffset()/60,
+  //                         browser:window.navigator.userAgent,
+  //                         pageLoadTime:loadPage,
+  //                         contentLoadTime:request,
+  //                         dnsSearchTime:lookupDomain,
+  //                         domAnalyzeTime:domReady,
+  //                         ttfbReadTime:ttfb,
+  //                         tcpBuildTime:connect,
+  //                         redirectTime:redirect,
+  //                         onloadCallbackTime:loadEvent,
+  //                         uninstallPageTime: unloadEvent,
+  //                         isMobile:isMobile && isMobile[0],
+  //                         navigationtype:performance.navigation.type,
+  //                         measure:parseInt(measure.duration),
+  //                         dompreload: time.responseEnd - time.navigationStart,
+  //                         domloadend:time.domComplete - time.domLoading,
+  //                         domative:time.domInteractive - time.domLoading,
+  //                         shelllod:time.domContentLoadedEventEnd - time.domContentLoadedEventStart,
+  //                         measure5:parseInt(measure5),
+  //                         blankTime:time.domLoading - time.fetchStart,
+  //                         v:'v3',
+
+  //                     };
+
+  //                   // window.performance.clearMarks();
+  //                   // window.performance.clearMeasures();
+  //                   ApiClientMonitor.setMonitor(data)
+  //                     return data;
+  //                   }
+  //                 })
+  //               }
+  //         }
+}
 
 const styles = {
   list: {
-    fontSize: 18
+    fontSize: 18,
   },
   card: {
     border: "none",
-    borderRadius: 0
-  }
+    borderRadius: 0,
+  },
 };
 
 function mapStateToProps(state) {
@@ -1035,10 +1045,10 @@ function mapStateToProps(state) {
     account: state.app.account,
     theme: state.app.theme,
     activeLanguage: state.app.activeLanguage,
-    wsdata: state.account.wsdata
+    wsdata: state.account.wsdata,
   };
 }
 
 const mapDispatchToProps = {
-  setWebsocket
+  setWebsocket,
 };

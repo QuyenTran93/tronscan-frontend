@@ -11,7 +11,7 @@ import {
   FormattedNumber,
   FormattedTime,
   FormattedMessage,
-  injectIntl
+  injectIntl,
 } from "react-intl";
 import { AddressLink, BlockNumberLink } from "../../common/Links";
 import { CopyText } from "../../common/Copy";
@@ -32,7 +32,7 @@ class Block extends React.Component {
       notFound: false,
       block: {
         number: -1,
-        transfers: []
+        transfers: [],
       },
       tabs: {
         transactions: {
@@ -40,17 +40,17 @@ class Block extends React.Component {
           icon: "fa fa-exchange-alt",
           path: "",
           label: <span>{tu("transactions")}</span>,
-          cmp: () => <TronLoader />
+          cmp: () => <TronLoader />,
         },
         transfers: {
           id: "transfers",
           icon: "fa fa-handshake",
           path: "/transfers",
           label: <span>{tu("transfers")}</span>,
-          cmp: () => <TronLoader />
-        }
+          cmp: () => <TronLoader />,
+        },
       },
-      confirmedNum: 0
+      confirmedNum: 0,
     };
   }
 
@@ -78,14 +78,14 @@ class Block extends React.Component {
     let block;
 
     if (!isNaN(id)) {
-      block = await Client.getBlockByNumber(id);
+      block = await Client.getBlockByNumber({ number: id });
     } else {
       block = await Client.getBlockByHash(id);
     }
 
     if (!block) {
       this.setState({
-        notFound: true
+        notFound: true,
       });
       return;
     }
@@ -94,7 +94,7 @@ class Block extends React.Component {
       let confirmNumObj = await Client.getBlockByNumber(block.number);
       let confirmedNum = confirmNumObj && confirmNumObj.confirmations;
       this.setState({
-        confirmedNum
+        confirmedNum,
       });
 
       if (confirmedNum < 19) {
@@ -102,12 +102,12 @@ class Block extends React.Component {
           let confirmNumObj = await Client.getBlockByNumber(block.number);
           let confirmedNum = confirmNumObj && confirmNumObj.confirmations;
           this.setState({
-            confirmedNum
+            confirmedNum,
           });
           if (confirmedNum > 18) {
             block = await Client.getBlockByNumber(id);
             this.setState({
-              block
+              block,
             });
             clearInterval(updateTime);
           }
@@ -127,28 +127,22 @@ class Block extends React.Component {
           icon: "fa fa-handshake",
           path: "",
           label: <span>{tu("transactions")}</span>,
-          cmp: () => <Transactions filter={{ block: block.number }} isBlock />
+          cmp: () => <Transactions filter={{ block: block.number }} isBlock />,
         },
         transfers: {
           id: "transfers",
           icon: "fa fa-exchange-alt",
           path: "/transfers",
           label: <span>{tu("transfers")}</span>,
-          cmp: () => <Transfers filter={{ block: block.number }} />
-        }
-      }
+          cmp: () => <Transfers filter={{ block: block.number }} />,
+        },
+      },
     });
   }
 
   render() {
-    let {
-      block,
-      tabs,
-      loading,
-      totalTransactions,
-      notFound,
-      confirmedNum
-    } = this.state;
+    let { block, tabs, loading, totalTransactions, notFound, confirmedNum } =
+      this.state;
     let { activeLanguage, match, intl } = this.props;
     if (notFound) {
       return (
@@ -187,7 +181,7 @@ class Block extends React.Component {
                           <QuestionMark
                             placement="right"
                             text={intl.formatMessage({
-                              id: "full_node_version_confirmed_tips"
+                              id: "full_node_version_confirmed_tips",
                             })}
                           ></QuestionMark>
                           :
@@ -313,7 +307,7 @@ class Block extends React.Component {
               <div className="card mt-3 list-style-body">
                 <div className="card-header list-style-body__header">
                   <ul className="nav nav-tabs card-header-tabs">
-                    {Object.values(tabs).map(tab => (
+                    {Object.values(tabs).map((tab) => (
                       <li key={tab.id} className="nav-item">
                         <NavLink
                           exact
@@ -328,12 +322,12 @@ class Block extends React.Component {
                 </div>
                 <div className="card-body p-0 list-style-body__body">
                   <Switch>
-                    {Object.values(tabs).map(tab => (
+                    {Object.values(tabs).map((tab) => (
                       <Route
                         key={tab.id}
                         exact
                         path={match.url + tab.path}
-                        render={props => <tab.cmp block={block} />}
+                        render={(props) => <tab.cmp block={block} />}
                       />
                     ))}
                   </Switch>
@@ -352,12 +346,12 @@ function mapStateToProps(state) {
 
   return {
     block,
-    activeLanguage: state.app.activeLanguage
+    activeLanguage: state.app.activeLanguage,
   };
 }
 
 const mapDispatchToProps = {
-  loadTokens
+  loadTokens,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Block);

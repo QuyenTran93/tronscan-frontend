@@ -93,7 +93,7 @@ export default class panelGroup extends Component {
       maxTps: data.tps.data.maxTps ? data.tps.data.maxTps : 0,
       tps: data.tps.data.currentTps ? data.tps.data.currentTps : 0,
       blockHeight: data.tps.data.blockHeight ? data.tps.data.blockHeight : 0,
-      transactionPerDay: data.yesterdayStat.data[0].newTransactionSeen
+      transactionPerDay: data.yesterdayStat?.data[0].newTransactionSeen
     };
     if (type == "mainnet") {
       this.setState({
@@ -147,11 +147,11 @@ export default class panelGroup extends Component {
     const { mainnetData, sunnetData, complexData } = this.state;
     IS_MAINNET && setWebsocketSun();
     IS_MAINNET && (await this.loadAccounts("mainnet", { limit: 1 }));
-    await this.loadAccounts("sunnet", { limit: 1 });
+    // await this.loadAccounts("sunnet", { limit: 1 });
 
     this.reconnect();
     IS_MAINNET && (await this.loadHomepageBundle("mainnet"));
-    await this.loadHomepageBundle("sunnet");
+    // await this.loadHomepageBundle("sunnet");
   }
 
   async componentDidUpdate(prevProps) {
